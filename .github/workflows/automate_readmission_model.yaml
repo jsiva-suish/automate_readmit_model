@@ -20,9 +20,9 @@ jobs:
   automate-r-scripts:
     runs-on: ubuntu-latest
     env:
-      GOOGLEDRIVE_KEY:${{secrets.GOOGLEDRIVE_KEY}}
-      GMAIL_USERNAME:${{secrets.GMAIL_USERNAME}}
-      GMAIL_PASSWORD:${{secrets.GMAIL_PASSWORD}}
+      GOOGLEDRIVE_KEY: ${{secrets.GOOGLEDRIVE_KEY}}
+      GMAIL_USERNAME: ${{secrets.GMAIL_USERNAME}}
+      GMAIL_PASSWORD: ${{secrets.GMAIL_PASSWORD}}
     steps:
       - uses: actions/checkout@v3
 
