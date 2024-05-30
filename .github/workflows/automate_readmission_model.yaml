@@ -9,16 +9,20 @@ on:
     # 4. Entry: Month of the year when the process will be started [1-12]
     # 5. Entry: Weekday when the process will be started [0-6] [0 is Sunday]
     # So according to this '*/30 * * * *' will run at every 30 minutes.
-
+  - cron: '*/30 * * * *'
+  
+  workflow_dispatch:
  
 
-name: 
+name: automate_r_proj
 
 jobs:
   automate-r-scripts:
     runs-on: ubuntu-latest
     env:
-      
+      GOOGLEDRIVE_KEY:${{secrets.GOOGLEDRIVE_KEY}}
+      GMAIL_USERNAME:${{secrets.GMAIL_USERNAME}}
+      GMAIL_PASSWORD:${{secrets.GMAIL_PASSWORD}}
     steps:
       - uses: actions/checkout@v3
 
@@ -33,5 +37,5 @@ jobs:
 
       - name: Run model
         run: |
-          
+          source("R/automate_r_script.R", echo = TRUE)
         shell: Rscript {0}

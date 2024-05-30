@@ -27,39 +27,59 @@ library(workflows)
 library(emayili)
 library(gargle)
 library(tidyr)
+library(recipes)
+library(glmnet)
 
 
 ## Load the prediction model
-
+readmit_model <- read_rds("inst/final_readmission_model.rds")
 
 ##---------------------------------------------------------------------------##
 ## Decrpyt authorization to Google Drive and Google Sheet
 ##---------------------------------------------------------------------------##
 
 ## googledrive De-auth setup
-
+googledrive::drive_auth(
+  path=gargle::secret_decrypt_json(
+    "inst/googledrive-encrypt.json",
+    "GOOGLEDRIVE_KEY"
+  )
+)
 
 ## googlesheet De-auth setup
-
+googlesheets4::gs4_auth(
+  path=gargle::secret_decrypt_json(
+    "inst/googledrive-encrypt.json",
+    "GOOGLEDRIVE_KEY"
+  )
+)
 
 ##---------------------------------------------------------------------------##
 ##---------------------------------------------------------------------------##
 ## Task 7: Load the data and make predictions
 ##---------------------------------------------------------------------------##
 ##---------------------------------------------------------------------------##
-
+sheet_id <- "https://docs.google.com/spreadsheets/d/1MROJzI6qLE0eFoOW0hozMC8bFomFMZGQvsSyxSpEXZY/edit?usp=sharing"
 ##---------------------------------------------------------------------------##
 ## Read in patient data and make predictions 
 ##---------------------------------------------------------------------------##
-
+patient_data <- read_sheet(sheet_id, sheet=1)
 ## Load the googlesheet where data is stored
+patient_data_with_pred <- read_sheet(sheet_id, sheet=2)
 
 
 ## Load the patient raw data from the first sheet
-
-
-## Read the second sheet that will contain the patient data and prediction
-
+# pred_data <-
+#   augment(readmit_model, patient_data) |>
+#   select(
+#     all_of (colnames(patient_data)), 
+#     "Prediction" = ".pred_class",
+#     "Prob No Readmit" = ".pred_No",
+#     "Prob Readmit" = ".pred_Yes"
+#   )
+# 
+# ## Read the second sheet that will contain the patient data and prediction
+# sheet_write(ss=sheet_id, data=pred_data, sheet="patient_data_with_prediction")
 
 ## Make predictions for the patient data (sheet 1)
 
@@ -116,7 +136,9 @@ format_prediction_to_percent <- function(sheet, pos){
 ##---------------------------------------------------------------------------##
 
 ## Capture the data of new patients in sheet 1
-
+new_patients <- patient_data |>
+  anti_join(patient_data_with_pred |>
+              select("patient_id"))
 
 
 ## If there is a new patient, then make prediction and 
@@ -142,7 +164,9 @@ if(nrow(new_patients) > 0) {
   }
   
   ## Append new patient and prediction to sheet 2
-  
+  sheet_append(ss = sheet_id,
+               data = pred_data,
+               sheet = "patient_data_with_prediction")
   
   ## Format the text col (i.e 0.564 -> 56%)
   
@@ -169,9 +193,24 @@ if(nrow(new_patients) > 0){
     password = Sys.getenv("GMAIL_PASSWORD")
   )
   
-  send_to <- c("arimoroolayinka@gmail.com")
+  send_to <- c("joshua.siva@jackrabbitlx.com")
   
   ## Create and send email message
+  emayili <- envelope() %>%
+    from("joshua.siva@jackrabbitlx.com") %>%
+    to(send_to) %>%
+    subject("New Readmission Prediction") %>%
+    emayili::render(
+      input = "R/automate_r_email_content.Rmd",
+      params = list (
+        patient_id = pred_data$patient_id,
+        pred = pred_data$Prediction,
+        no_readmit = pred_data$`Prob No Readmit`,
+        yes_readmit = pred_data$`Prob Readmit`
+      ),
+      squish = F,
+      include_css = "bootstrap"
+    )
   
   
   ## Show as the email sends

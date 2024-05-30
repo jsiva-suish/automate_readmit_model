@@ -7,7 +7,10 @@ output:
       base_font:
         google: "Open Sans"
 params:
-  
+  patient_id : NA
+  pred: NA
+  no_readmit: NA
+  yes_readmit: NA
 ---
 
 ```{r setup, include=FALSE}
@@ -23,11 +26,17 @@ Please find attached the results of the readmission prediction for new patients.
 ```{r}
 
 ## Create a data frame of predictions
-
+readmit_df <- data.frame(
+  id = params$patient_id,
+  pred = params$pred,
+  no_readmit = params$no_readmit,
+  yes_readmit = params$yes_readmit
+)
 
 ## Create a customized table of predictions
 table <-
-  
+  readmit_df |>
+  gt() |>
   cols_label(.list = c("id" = "Patient ID",
                        "pred" = "Prediction",
                        "no_readmit" = "Probability of No Readmission",
@@ -58,4 +67,4 @@ table <-
 table
 ```
 
-Click here to view the complete data and prediction.
+Click [here](https://docs.google.com/spreadsheets/d/1MROJzI6qLE0eFoOW0hozMC8bFomFMZGQvsSyxSpEXZY/edit?usp=sharing) to view the complete data and prediction.
